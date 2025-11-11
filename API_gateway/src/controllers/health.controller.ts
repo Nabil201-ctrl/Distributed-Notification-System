@@ -1,7 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RabbitMQService } from '../services/rabbitmq.service';
 import { RedisService } from '../services/redis.service';
+import { HealthStatusResponseDto } from '../dto/health-status-response.dto';
 
+@ApiTags('health')
 @Controller('health')
 export class HealthController {
   constructor(
@@ -10,6 +13,11 @@ export class HealthController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Check downstream service health' })
+  @ApiOkResponse({
+    description: 'RabbitMQ and Redis health status',
+    type: HealthStatusResponseDto
+  })
   async checkHealth() {
     const rabbitmqHealthy = this.rabbitMQService.isHealthy();
     const redisHealthy = await this.redisService.isHealthy();
