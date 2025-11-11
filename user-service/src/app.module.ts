@@ -23,7 +23,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
       password: process.env.DB_PASSWORD || 'postgres',
       database: process.env.DB_NAME || 'user_service_db',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: process.env.NODE_ENV !== 'production',
+      synchronize: false,
       logging: process.env.NODE_ENV === 'development',
       ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     }),

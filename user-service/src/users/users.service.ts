@@ -65,7 +65,7 @@ export class UsersService {
             event_type: 'user.created',
             user_id: savedUser.id,
             email: savedUser.email,
-            push_token: savedUser.push_token,
+            push_token: savedUser.push_token ?? undefined,
             preferences: {
                 email: savedUser.preferences.email,
                 push: savedUser.preferences.push,
@@ -176,7 +176,7 @@ export class UsersService {
             event_type: 'user.updated',
             user_id: updatedUser.id,
             email: updatedUser.email,
-            push_token: updatedUser.push_token,
+            push_token: updatedUser.push_token ?? undefined,
             preferences: {
                 email: updatedUser.preferences.email,
                 push: updatedUser.preferences.push,

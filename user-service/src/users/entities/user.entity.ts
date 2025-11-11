@@ -33,7 +33,7 @@ export class User {
 
     @Column()
     @Exclude() // Exclude password from responses
-    password: string;
+    password?: string;
 
     @Column({ type: 'text', nullable: true })
     push_token: string | null;
@@ -53,7 +53,7 @@ export class User {
 
     @Column({ type: 'text', nullable: true })
     @Exclude()
-    refresh_token: string | null;
+    refresh_token?: string | null;
 
     @Column({ type: 'timestamp', nullable: true })
     last_login: Date | null;

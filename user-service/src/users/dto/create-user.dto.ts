@@ -9,6 +9,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserPreferenceDto } from './user-preference.dto';
+import { NotificationPreferenceDto } from './notification-preference.dto';
 
 export class CreateUserDto {
     @ApiProperty({ example: 'John Doe' })
@@ -42,4 +43,25 @@ export class CreateUserDto {
     @ValidateNested()
     @Type(() => UserPreferenceDto)
     preferences: UserPreferenceDto;
+
+    @ApiProperty({
+        type: NotificationPreferenceDto,
+        required: false,
+        example: {
+            email_enabled: true,
+            push_enabled: true,
+            marketing_enabled: true,
+            security_alerts_enabled: true,
+            quiet_hours: {
+                enabled: true,
+                start_time: '22:00',
+                end_time: '07:00',
+                timezone: 'Africa/Lagos',
+            },
+        },
+    })
+    @ValidateNested()
+    @Type(() => NotificationPreferenceDto)
+    @IsOptional()
+    notification_preferences?: NotificationPreferenceDto;
 }
