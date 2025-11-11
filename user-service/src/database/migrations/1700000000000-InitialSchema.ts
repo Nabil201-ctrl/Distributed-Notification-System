@@ -4,13 +4,11 @@ export class InitialSchema1700000000000 implements MigrationInterface {
     name = 'InitialSchema1700000000000';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        // Enable UUID extension
         await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
         await queryRunner.query(`DROP TABLE IF EXISTS "user_preferences"`);
         await queryRunner.query(`DROP TABLE IF EXISTS "users"`);
 
-        // Create users table
         await queryRunner.query(`
       CREATE TABLE "users" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -29,17 +27,14 @@ export class InitialSchema1700000000000 implements MigrationInterface {
       )
     `);
 
-        // Create index on email
         await queryRunner.query(`
       CREATE INDEX "IDX_users_email" ON "users" ("email")
     `);
 
-        // Create index on role
         await queryRunner.query(`
       CREATE INDEX "IDX_users_role" ON "users" ("role")
     `);
 
-        // Create user_preferences table
         await queryRunner.query(`
       CREATE TABLE "user_preferences" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -55,14 +50,11 @@ export class InitialSchema1700000000000 implements MigrationInterface {
       )
     `);
 
-        // Create unique index on user_id
         await queryRunner.query(`
       CREATE UNIQUE INDEX "IDX_user_preferences_user_id" 
       ON "user_preferences" ("user_id")
     `);
 
-
-        // Create default admin user (password: secret321!)
         await queryRunner.query(`
       INSERT INTO "users" ("name", "email", "password", "role", "email_verified")
       VALUES (
@@ -74,7 +66,6 @@ export class InitialSchema1700000000000 implements MigrationInterface {
       )
     `);
 
-        // Create preferences for admin
         await queryRunner.query(`
       INSERT INTO "user_preferences" ("user_id", "email", "push")
       SELECT id, true, true FROM "users" WHERE email = 'admin@notification-system.local'

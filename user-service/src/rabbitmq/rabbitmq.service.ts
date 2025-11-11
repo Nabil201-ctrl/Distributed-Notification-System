@@ -21,7 +21,6 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     private channel: amqp.Channel;
     private readonly rabbitmqUrl: string;
 
-    // Exchange and Queue names
     private readonly EXCHANGE = 'notifications.direct';
     private readonly USER_EVENTS_QUEUE = 'user.events';
     private readonly EMAIL_QUEUE = 'email.queue';
@@ -57,15 +56,12 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
             this.channel = await this.connection.createChannel();
 
-            // Set prefetch to 1 for fair dispatch
             await this.channel.prefetch(1);
 
-            // Declare exchange
             await this.channel.assertExchange(this.EXCHANGE, 'direct', {
                 durable: true,
             });
 
-            // Declare queues
             await this.channel.assertQueue(this.USER_EVENTS_QUEUE, {
                 durable: true,
             });
@@ -73,7 +69,6 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
             this.logger.log('Successfully connected to RabbitMQ');
         } catch (error) {
             this.logger.error('Failed to connect to RabbitMQ:', error);
-            // Retry connection after 5 seconds
             setTimeout(() => this.connect(), 5000);
         }
     }
@@ -103,7 +98,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
             const published = this.channel.publish(
                 this.EXCHANGE,
-                'user.events', // routing key
+                'user.events',
                 Buffer.from(message),
                 {
                     persistent: true,

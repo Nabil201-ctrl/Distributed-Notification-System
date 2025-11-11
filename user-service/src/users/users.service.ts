@@ -51,7 +51,6 @@ export class UsersService {
 
         const savedUser = await this.userRepository.save(user);
 
-        // Publish user.created event
         await this.rabbitMQService.publishUserEvent({
             event_type: 'user.created',
             user_id: savedUser.id,
