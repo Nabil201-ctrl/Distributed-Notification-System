@@ -6,10 +6,7 @@ async function bootstrap() {
   
   // Enable CORS
   app.enableCors();
-  
-  // Global prefix
-  app.setGlobalPrefix('api');
-  
+    
   const port = process.env.PORT || 3000;
   await app.listen(port);
   console.log(`API Gateway running on port ${port}`);
