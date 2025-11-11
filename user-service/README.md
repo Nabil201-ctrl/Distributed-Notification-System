@@ -142,6 +142,17 @@ POST /auth/refresh
 - created_at, updated_at
 ```
 
+### User Preference Table
+
+```sql
+- id (UUID, PK)
+- user_id (UUID, FK → users.id, UNIQUE)
+- email (BOOLEAN)
+- push (BOOLEAN)
+- created_at (TIMESTAMP)
+- updated_at (TIMESTAMP)
+```
+
 ## 🔐 Security Features
 
 1. **Password Security**: bcrypt hashing, passwords excluded from responses

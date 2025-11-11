@@ -15,7 +15,7 @@ import { PushToken } from './push-token.entity';
 export enum UserRole {
     USER = 'user',
     ADMIN = 'admin',
-    SERVICE = 'service', // For inter-service communication
+    SERVICE = 'service',
 }
 
 @Entity('users')

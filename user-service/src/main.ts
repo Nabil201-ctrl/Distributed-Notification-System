@@ -6,13 +6,11 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Enable CORS
   app.enableCors({
     origin: process.env.CORS_ORIGIN || '*',
     credentials: true,
   });
 
-  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -24,10 +22,8 @@ async function bootstrap() {
     }),
   );
 
-  // Enable class-transformer serialization (excludes @Exclude() fields)
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
-  // Swagger documentation
   const config = new DocumentBuilder()
     .setTitle('User Service API')
     .setDescription('Notification System - User Management & Authentication Service')
@@ -54,13 +50,6 @@ async function bootstrap() {
   const port = process.env.PORT || 3001;
   await app.listen(port);
 
-  console.log(`
-    ╔════════════════════════════════════════════╗
-    ║   User Service Running                     ║
-    ║   Port: ${port}                           ║
-    ║   Swagger: http://localhost:${port}/api/docs ║
-    ║   Environment: ${process.env.NODE_ENV || 'development'}             ║
-    ╚════════════════════════════════════════════╝
-  `);
+  console.log(`User Service Running, Port: ${port}, Swagger: http://localhost:${port}/api/docs, Environment: ${process.env.NODE_ENV || 'development'}`);
 }
 bootstrap();

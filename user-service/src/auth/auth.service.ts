@@ -12,7 +12,7 @@ import { User, UserRole } from '../users/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 
 export interface JwtPayload {
-    sub: string; // user id
+    sub: string;
     email: string;
     role: UserRole;
     type: 'access' | 'refresh';
@@ -38,12 +38,10 @@ export class AuthService {
             throw new UnauthorizedException('Account is deactivated');
         }
 
-        // Update last login
         user.last_login = new Date();
 
         const tokens = await this.generateTokens(user);
 
-        // Store refresh token hash
         const hashedRefreshToken = await bcrypt.hash(tokens.refresh_token, 10);
         user.refresh_token = hashedRefreshToken;
         await this.userRepository.save(user);
@@ -52,7 +50,7 @@ export class AuthService {
             access_token: tokens.access_token,
             refresh_token: tokens.refresh_token,
             token_type: 'Bearer',
-            expires_in: 3600, // 1 hour
+            expires_in: 3600,
             user: {
                 id: user.id,
                 name: user.name,
@@ -85,7 +83,6 @@ export class AuthService {
                 throw new UnauthorizedException('Invalid refresh token');
             }
 
-            // Verify refresh token
             const isValidRefreshToken = await bcrypt.compare(
                 refreshToken,
                 user.refresh_token,
@@ -95,10 +92,8 @@ export class AuthService {
                 throw new UnauthorizedException('Invalid refresh token');
             }
 
-            // Generate new tokens
             const tokens = await this.generateTokens(user);
 
-            // Update refresh token
             const hashedRefreshToken = await bcrypt.hash(tokens.refresh_token, 10);
             user.refresh_token = hashedRefreshToken;
             await this.userRepository.save(user);

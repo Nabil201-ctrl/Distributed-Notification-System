@@ -27,13 +27,9 @@ export class HealthController {
     @ApiResponse({ status: 503, description: 'Service is unhealthy' })
     async check() {
         return this.health.check([
-            // Check database connection
             () => this.db.pingCheck('database', { timeout: 2000 }),
-            // Check memory usage (heap should not exceed 150MB)
             () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
-            // Check RSS memory (should not exceed 300MB)
             () => this.memory.checkRSS('memory_rss', 300 * 1024 * 1024),
-            // Check RabbitMQ connection
             async () => {
                 const isHealthy = await this.rabbitMQService.healthCheck();
                 return {
