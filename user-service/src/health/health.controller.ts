@@ -1,0 +1,71 @@
+import { Controller, Get } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+    HealthCheck,
+    HealthCheckService,
+    TypeOrmHealthIndicator,
+    MemoryHealthIndicator,
+} from '@nestjs/terminus';
+import { Public } from '../auth/decorators/public.decorator';
+import { RabbitMQService } from '../rabbitmq/rabbitmq.service';
+
+@ApiTags('Health')
+@Controller('health')
+@Public()
+export class HealthController {
+    constructor(
+        private health: HealthCheckService,
+        private db: TypeOrmHealthIndicator,
+        private memory: MemoryHealthIndicator,
+        private rabbitMQService: RabbitMQService,
+    ) { }
+
+    @Get()
+    @HealthCheck()
+    @ApiOperation({ summary: 'Check service health status' })
+    @ApiResponse({ status: 200, description: 'Service is healthy' })
+    @ApiResponse({ status: 503, description: 'Service is unhealthy' })
+    async check() {
+        return this.health.check([
+            () => this.db.pingCheck('database', { timeout: 2000 }),
+            () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
+            () => this.memory.checkRSS('memory_rss', 300 * 1024 * 1024),
+            async () => {
+                const isHealthy = await this.rabbitMQService.healthCheck();
+                return {
+                    rabbitmq: {
+                        status: isHealthy ? 'up' : 'down',
+                    },
+                };
+            },
+        ]);
+    }
+
+    @Get('ready')
+    @ApiOperation({ summary: 'Check if service is ready to accept traffic' })
+    @ApiResponse({ status: 200, description: 'Service is ready' })
+    async readiness() {
+        const rabbitMQHealthy = await this.rabbitMQService.healthCheck();
+
+        return {
+            status: rabbitMQHealthy ? 'ready' : 'not_ready',
+            timestamp: new Date().toISOString(),
+            service: 'user-service',
+            version: process.env.npm_package_version || '1.0.0',
+            dependencies: {
+                rabbitmq: rabbitMQHealthy ? 'connected' : 'disconnected',
+            },
+        };
+    }
+
+    @Get('live')
+    @ApiOperation({ summary: 'Check if service is alive' })
+    @ApiResponse({ status: 200, description: 'Service is alive' })
+    async liveness() {
+        return {
+            status: 'alive',
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+        };
+    }
+}
