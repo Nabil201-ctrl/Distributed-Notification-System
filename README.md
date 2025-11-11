@@ -40,7 +40,11 @@ scaling and service discovery.
 ### 3. Email Service
 
 -   Consumes messages from the `email_queue`.
+<<<<<<< HEAD
 -   Fills templates using variables (e.g.Â `{{name}}`).
+=======
+-   Fills templates using variables (e.g. `{{name}}`).
+>>>>>>> 6a44665 (feat(api-gateway): initial setup with RabbitMQ integration)
 -   Sends emails using SMTP or providers like SendGrid/Mailgun.
 -   Handles delivery confirmations and bounces.
 
@@ -62,8 +66,14 @@ scaling and service discovery.
 
 **Exchange:** `notifications.direct`
 
+<<<<<<< HEAD
 Queues: - `email.queue` â†’ Email Service - `push.queue` â†’ Push Service -
 `failed.queue` â†’ Dead Letter Queue
+=======
+Queues: - `email.queue` → Email Service - `push.queue` → Push Service -
+
+`failed.queue` → Dead Letter Queue
+>>>>>>> 6a44665 (feat(api-gateway): initial setup with RabbitMQ integration)
 
 ------------------------------------------------------------------------
 
