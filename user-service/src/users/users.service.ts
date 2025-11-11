@@ -11,7 +11,6 @@ import { User, UserRole } from './entities/user.entity';
 import { UserPreference } from './entities/user-preference.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UpstashRedisService } from '../cache/upstash-redis.service';
 import { RabbitMQService } from '../rabbitmq/rabbitmq.service';
 
 @Injectable()
@@ -21,12 +20,10 @@ export class UsersService {
         private userRepository: Repository<User>,
         @InjectRepository(UserPreference)
         private preferencesRepository: Repository<UserPreference>,
-        private redisService: UpstashRedisService,
         private rabbitMQService: RabbitMQService,
     ) { }
 
     async createUser(createUserDto: CreateUserDto): Promise<User> {
-        // Check if user already exists
         const existingUser = await this.userRepository.findOne({
             where: { email: createUserDto.email },
         });
@@ -35,10 +32,8 @@ export class UsersService {
             throw new ConflictException('User with this email already exists');
         }
 
-        // Hash password
         const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
-        // Create user
         const user = this.userRepository.create({
             name: createUserDto.name,
             email: createUserDto.email,
@@ -47,7 +42,6 @@ export class UsersService {
             role: UserRole.USER,
         });
 
-        // Create user preferences
         const preferences = this.preferencesRepository.create({
             email: createUserDto.preferences.email,
             push: createUserDto.preferences.push,
@@ -57,10 +51,7 @@ export class UsersService {
 
         const savedUser = await this.userRepository.save(user);
 
-        // Cache user data
-        await this.cacheUser(savedUser);
-
-        // Publish user.created event to RabbitMQ
+        // Publish user.created event
         await this.rabbitMQService.publishUserEvent({
             event_type: 'user.created',
             user_id: savedUser.id,
@@ -73,7 +64,6 @@ export class UsersService {
             timestamp: new Date().toISOString(),
         });
 
-        // Remove password from response
         delete savedUser.password;
         delete savedUser.refresh_token;
 
@@ -85,22 +75,12 @@ export class UsersService {
         requestingUserId?: string,
         requestingUserRole?: UserRole,
     ): Promise<User> {
-        // Authorization check
         if (requestingUserId && requestingUserRole !== UserRole.ADMIN) {
             if (requestingUserId !== id && requestingUserRole !== UserRole.SERVICE) {
                 throw new ForbiddenException('Access denied');
             }
         }
 
-        // Try to get from cache first
-        const cacheKey = `user:${id}`;
-        const cachedUser = await this.redisService.getJson<User>(cacheKey);
-
-        if (cachedUser) {
-            return cachedUser;
-        }
-
-        // If not in cache, get from database
         const user = await this.userRepository.findOne({
             where: { id },
             relations: ['preferences'],
@@ -113,9 +93,6 @@ export class UsersService {
         delete user.password;
         delete user.refresh_token;
 
-        // Cache the user
-        await this.cacheUser(user);
-
         return user;
     }
 
@@ -125,7 +102,6 @@ export class UsersService {
         requestingUserId: string,
         requestingUserRole: UserRole,
     ): Promise<User> {
-        // Authorization check - users can only update their own profile
         if (requestingUserRole !== UserRole.ADMIN && requestingUserId !== id) {
             throw new ForbiddenException('You can only update your own profile');
         }
@@ -139,16 +115,9 @@ export class UsersService {
             throw new NotFoundException('User not found');
         }
 
-        // Update basic fields
-        if (updateUserDto.name) {
-            user.name = updateUserDto.name;
-        }
+        if (updateUserDto.name) user.name = updateUserDto.name;
+        if (updateUserDto.push_token !== undefined) user.push_token = updateUserDto.push_token;
 
-        if (updateUserDto.push_token !== undefined) {
-            user.push_token = updateUserDto.push_token;
-        }
-
-        // Update preferences if provided
         if (updateUserDto.preferences) {
             if (user.preferences) {
                 user.preferences.email = updateUserDto.preferences.email;
@@ -160,18 +129,12 @@ export class UsersService {
                     email: updateUserDto.preferences.email,
                     push: updateUserDto.preferences.push,
                 });
-                user.preferences = await this.preferencesRepository.save(
-                    newPreferences,
-                );
+                user.preferences = await this.preferencesRepository.save(newPreferences);
             }
         }
 
         const updatedUser = await this.userRepository.save(user);
 
-        // Invalidate cache
-        await this.invalidateUserCache(id);
-
-        // Publish user.updated event
         await this.rabbitMQService.publishUserEvent({
             event_type: 'user.updated',
             user_id: updatedUser.id,
@@ -195,7 +158,6 @@ export class UsersService {
         requestingUserId: string,
         requestingUserRole: UserRole,
     ): Promise<void> {
-        // Only admins or the user themselves can delete
         if (requestingUserRole !== UserRole.ADMIN && requestingUserId !== id) {
             throw new ForbiddenException('Access denied');
         }
@@ -207,9 +169,7 @@ export class UsersService {
         }
 
         await this.userRepository.remove(user);
-        await this.invalidateUserCache(id);
 
-        // Publish user.deleted event
         await this.rabbitMQService.publishUserEvent({
             event_type: 'user.deleted',
             user_id: id,
@@ -221,10 +181,7 @@ export class UsersService {
     async getUserContactInfo(userId: string): Promise<{
         email: string;
         push_token: string | null;
-        preferences: {
-            email: boolean;
-            push: boolean;
-        };
+        preferences: { email: boolean; push: boolean };
     }> {
         const user = await this.getUserById(userId);
 
@@ -244,7 +201,6 @@ export class UsersService {
         requestingUserId: string,
         requestingUserRole: UserRole,
     ): Promise<User> {
-        // Authorization check
         if (requestingUserRole !== UserRole.ADMIN && requestingUserId !== userId) {
             throw new ForbiddenException('Access denied');
         }
@@ -261,8 +217,6 @@ export class UsersService {
         user.push_token = pushToken;
         const updatedUser = await this.userRepository.save(user);
 
-        await this.invalidateUserCache(userId);
-
         delete updatedUser.password;
         delete updatedUser.refresh_token;
 
@@ -274,7 +228,6 @@ export class UsersService {
         requestingUserId: string,
         requestingUserRole: UserRole,
     ): Promise<void> {
-        // Authorization check
         if (requestingUserRole !== UserRole.ADMIN && requestingUserId !== userId) {
             throw new ForbiddenException('Access denied');
         }
@@ -287,7 +240,6 @@ export class UsersService {
 
         user.push_token = null;
         await this.userRepository.save(user);
-        await this.invalidateUserCache(userId);
     }
 
     async getAllUsers(
@@ -295,7 +247,6 @@ export class UsersService {
         limit: number = 10,
         requestingUserRole: UserRole,
     ): Promise<{ users: User[]; total: number }> {
-        // Only admins and services can list all users
         if (
             requestingUserRole !== UserRole.ADMIN &&
             requestingUserRole !== UserRole.SERVICE
@@ -310,22 +261,11 @@ export class UsersService {
             order: { created_at: 'DESC' },
         });
 
-        // Remove sensitive data
         users.forEach((user) => {
             delete user.password;
             delete user.refresh_token;
         });
 
         return { users, total };
-    }
-
-    private async cacheUser(user: User): Promise<void> {
-        const cacheKey = `user:${user.id}`;
-        await this.redisService.setJson(cacheKey, user, 300); // 5 minutes
-    }
-
-    private async invalidateUserCache(userId: string): Promise<void> {
-        const cacheKey = `user:${userId}`;
-        await this.redisService.del(cacheKey);
     }
 }

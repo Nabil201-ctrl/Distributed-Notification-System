@@ -4,7 +4,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
-import { CacheModule } from './cache/cache.module';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
@@ -27,7 +26,6 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
       logging: process.env.NODE_ENV === 'development',
       ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     }),
-    CacheModule,
     RabbitMQModule,
     AuthModule,
     UsersModule,

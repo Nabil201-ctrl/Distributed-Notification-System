@@ -8,7 +8,6 @@ export class InitialSchema1700000000000 implements MigrationInterface {
         await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
         await queryRunner.query(`DROP TABLE IF EXISTS "user_preferences"`);
-        await queryRunner.query(`DROP TABLE IF EXISTS "notification_preferences"`);
         await queryRunner.query(`DROP TABLE IF EXISTS "users"`);
 
         // Create users table
@@ -62,31 +61,8 @@ export class InitialSchema1700000000000 implements MigrationInterface {
       ON "user_preferences" ("user_id")
     `);
 
-        await queryRunner.query(`
-        CREATE TABLE "notification_preferences" (
-        "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "user_id" uuid NOT NULL,
-        "email_enabled" boolean DEFAULT true,
-        "push_enabled" boolean DEFAULT true,
-        "marketing_enabled" boolean DEFAULT true,
-        "security_alerts_enabled" boolean DEFAULT true,
-        "quiet_hours" json,
-        "created_at" timestamp DEFAULT now(),
-        "updated_at" timestamp DEFAULT now(),
-        CONSTRAINT "FK_notification_preferences_user"
-        FOREIGN KEY ("user_id")
-        REFERENCES "users"("id")
-        ON DELETE CASCADE
-    )
-    `);
 
-        // Optional: unique index on user_id
-        await queryRunner.query(`
-        CREATE UNIQUE INDEX "IDX_notification_preferences_user_id"
-        ON "notification_preferences" ("user_id")
-        `);
-
-        // Create default admin user (password: Admin123!)
+        // Create default admin user (password: secret321!)
         await queryRunner.query(`
       INSERT INTO "users" ("name", "email", "password", "role", "email_verified")
       VALUES (
@@ -102,11 +78,6 @@ export class InitialSchema1700000000000 implements MigrationInterface {
         await queryRunner.query(`
       INSERT INTO "user_preferences" ("user_id", "email", "push")
       SELECT id, true, true FROM "users" WHERE email = 'admin@notification-system.local'
-    `);
-
-        await queryRunner.query(`
-      INSERT INTO "notification_preferences" ("user_id", "email_enabled", "push_enabled", "marketing_enabled", "security_alerts_enabled")
-    SELECT id, true, true, true, true FROM "users" WHERE email = 'admin@notification-system.local';
     `);
     }
 
