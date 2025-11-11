@@ -1,12 +1,11 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import amqp from 'amqplib';
-import type { Connection, Channel } from 'amqplib';
+import { connect, type ChannelModel, type Channel } from 'amqplib';
 import { QueueMessage } from '../interfaces/notification.interface';
 
 @Injectable()
 export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
-  private connection!: Connection;
+  private connection!: ChannelModel;
   private channel!: Channel;
   private isConnected = false;
 
@@ -23,7 +22,12 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   async connect(): Promise<void> {
     try {
       const rabbitmqUrl = this.configService.get<string>('RABBITMQ_URL');
-      this.connection = await amqp.connect(rabbitmqUrl);
+
+      if (!rabbitmqUrl) {
+        throw new Error('RABBITMQ_URL environment variable is not configured');
+      }
+
+      this.connection = await connect(rabbitmqUrl);
       this.channel = await this.connection.createChannel();
 
       await this.channel.assertExchange('notifications.direct', 'direct', { durable: true });

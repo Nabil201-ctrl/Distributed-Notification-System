@@ -10,9 +10,21 @@ import {
 import { RabbitMQService } from '../services/rabbitmq.service';
 import { NotificationTrackerService } from '../services/notification-tracker.service';
 import type { QueueMessage } from '../interfaces/notification.interface';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { 
+  ApiTags, 
+  ApiOperation, 
+  ApiBody, 
+  ApiCreatedResponse, 
+  ApiBadRequestResponse,
+  ApiInternalServerErrorResponse,
+  ApiOkResponse,
+  ApiNotFoundResponse
+} from '@nestjs/swagger';
 import { EmailRequestDto } from '../dto/email-request.dto';
 import { PushRequestDto } from '../dto/push-request.dto';
+import { NotificationQueuedResponseDto } from '../dto/notification-queued-response.dto';
+import { ErrorResponseDto } from '../dto/error-response.dto';
+import { NotificationStatusResponseDto, NotificationStatusNotFoundResponseDto } from '../dto/notification-status-response.dto';
 
 @ApiTags('notifications')
 @Controller()
@@ -27,8 +39,18 @@ export class NotificationController {
   @Post('send_email')
   @ApiOperation({ summary: 'Queue an email notification' })
   @ApiBody({ type: EmailRequestDto })
-  @ApiResponse({ status: 201, description: 'Email notification queued successfully.'})
-  @ApiResponse({ status: 500, description: 'Internal server error.'})
+  @ApiCreatedResponse({
+    description: 'Email notification queued successfully.',
+    type: NotificationQueuedResponseDto
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed for the request body.',
+    type: ErrorResponseDto
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Failed to reach queue or datastore.',
+    type: ErrorResponseDto
+  })
   async sendEmail(@Body() request: EmailRequestDto) {
     try {
       // Validate request
@@ -78,8 +100,18 @@ export class NotificationController {
   @Post('send_push')
   @ApiOperation({ summary: 'Queue a push notification' })
   @ApiBody({ type: PushRequestDto })
-  @ApiResponse({ status: 201, description: 'Push notification queued successfully.'})
-  @ApiResponse({ status: 500, description: 'Internal server error.'})
+  @ApiCreatedResponse({
+    description: 'Push notification queued successfully.',
+    type: NotificationQueuedResponseDto
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed for the request body.',
+    type: ErrorResponseDto
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Failed to reach queue or datastore.',
+    type: ErrorResponseDto
+  })
   async sendPush(@Body() request: PushRequestDto) {
     try {
       // Validate request
@@ -128,9 +160,18 @@ export class NotificationController {
   // Check notification status by correlation ID
   @Get('status/:correlation_id')
   @ApiOperation({ summary: 'Get notification status' })
-  @ApiResponse({ status: 200, description: 'Notification status retrieved successfully.'})
-  @ApiResponse({ status: 404, description: 'Notification not found.'})
-  @ApiResponse({ status: 500, description: 'Internal server error.'})
+  @ApiOkResponse({
+    description: 'Notification status retrieved successfully.',
+    type: NotificationStatusResponseDto
+  })
+  @ApiNotFoundResponse({
+    description: 'Notification not found.',
+    type: NotificationStatusNotFoundResponseDto
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Failed to retrieve status due to server error.',
+    type: ErrorResponseDto
+  })
   async getStatus(@Param('correlation_id') correlationId: string) {
     try {
       const status = await this.trackerService.getNotificationStatus(correlationId);
@@ -166,7 +207,7 @@ export class NotificationController {
   }
 
   // Validate request parameters
-  private validateRequest(request: any): void {
+  private validateRequest(request: EmailRequestDto | PushRequestDto): void {
     if (!request.user_id) {
       throw new Error('user_id is required');
     }
