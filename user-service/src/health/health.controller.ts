@@ -7,7 +7,6 @@ import {
     MemoryHealthIndicator,
 } from '@nestjs/terminus';
 import { Public } from '../auth/decorators/public.decorator';
-import { UpstashRedisService } from '../cache/upstash-redis.service';
 import { RabbitMQService } from '../rabbitmq/rabbitmq.service';
 
 @ApiTags('Health')
@@ -18,7 +17,6 @@ export class HealthController {
         private health: HealthCheckService,
         private db: TypeOrmHealthIndicator,
         private memory: MemoryHealthIndicator,
-        private redisService: UpstashRedisService,
         private rabbitMQService: RabbitMQService,
     ) { }
 
@@ -30,20 +28,11 @@ export class HealthController {
     async check() {
         return this.health.check([
             // Check database connection
-            () => this.db.pingCheck('database'),
+            () => this.db.pingCheck('database', { timeout: 2000 }),
             // Check memory usage (heap should not exceed 150MB)
             () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
             // Check RSS memory (should not exceed 300MB)
             () => this.memory.checkRSS('memory_rss', 300 * 1024 * 1024),
-            // Check Redis connection
-            async () => {
-                const isHealthy = await this.redisService.ping();
-                return {
-                    redis: {
-                        status: isHealthy ? 'up' : 'down',
-                    },
-                };
-            },
             // Check RabbitMQ connection
             async () => {
                 const isHealthy = await this.rabbitMQService.healthCheck();
@@ -60,16 +49,14 @@ export class HealthController {
     @ApiOperation({ summary: 'Check if service is ready to accept traffic' })
     @ApiResponse({ status: 200, description: 'Service is ready' })
     async readiness() {
-        const redisHealthy = await this.redisService.ping();
         const rabbitMQHealthy = await this.rabbitMQService.healthCheck();
 
         return {
-            status: redisHealthy && rabbitMQHealthy ? 'ready' : 'not_ready',
+            status: rabbitMQHealthy ? 'ready' : 'not_ready',
             timestamp: new Date().toISOString(),
             service: 'user-service',
             version: process.env.npm_package_version || '1.0.0',
             dependencies: {
-                redis: redisHealthy ? 'connected' : 'disconnected',
                 rabbitmq: rabbitMQHealthy ? 'connected' : 'disconnected',
             },
         };

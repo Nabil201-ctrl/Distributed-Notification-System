@@ -7,15 +7,18 @@ import {
     OneToOne,
     JoinColumn,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { User } from './user.entity';
 
 @Entity('user_preferences')
 export class UserPreference {
     @PrimaryGeneratedColumn('uuid')
-    id: string;
+    @Exclude()
+    id?: string;
 
     @Column({ type: 'uuid' })
-    user_id: string;
+    @Exclude()
+    user_id?: string;
 
     @Column({ default: true })
     email: boolean;
@@ -24,10 +27,12 @@ export class UserPreference {
     push: boolean;
 
     @CreateDateColumn()
-    created_at: Date;
+    @Exclude()
+    created_at?: Date;
 
     @UpdateDateColumn()
-    updated_at: Date;
+    @Exclude()
+    updated_at?: Date;
 
     @OneToOne(() => User, (user) => user.preferences, {
         onDelete: 'CASCADE',

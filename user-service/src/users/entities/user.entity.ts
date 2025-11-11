@@ -10,7 +10,6 @@ import {
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { UserPreference } from './user-preference.entity';
-import { NotificationPreference } from './notification-preference.entity';
 import { PushToken } from './push-token.entity';
 
 export enum UserRole {
@@ -32,7 +31,7 @@ export class User {
     email: string;
 
     @Column()
-    @Exclude() // Exclude password from responses
+    @Exclude()
     password?: string;
 
     @Column({ type: 'text', nullable: true })
@@ -46,7 +45,8 @@ export class User {
     role: UserRole;
 
     @Column({ default: true })
-    is_active: boolean;
+    @Exclude()
+    is_active?: boolean;
 
     @Column({ default: false })
     email_verified: boolean;
@@ -56,19 +56,16 @@ export class User {
     refresh_token?: string | null;
 
     @Column({ type: 'timestamp', nullable: true })
-    last_login: Date | null;
+    @Exclude()
+    last_login?: Date | null;
 
     @CreateDateColumn()
-    created_at: Date;
+    @Exclude()
+    created_at?: Date;
 
     @UpdateDateColumn()
-    updated_at: Date;
-
-    @OneToOne(() => NotificationPreference, (pref) => pref.user, {
-        cascade: true,
-        eager: true,
-    })
-    notification_preferences: NotificationPreference;
+    @Exclude()
+    updated_at?: Date;
 
     @OneToOne(() => UserPreference, (pref) => pref.user, {
         cascade: true,
