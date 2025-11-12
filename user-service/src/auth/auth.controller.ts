@@ -16,6 +16,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { ApiResponse } from '../common/dto/api-response.dto';
+import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { Public } from './decorators/public.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -34,7 +35,7 @@ export class AuthController {
         description: 'Login successful',
         type: AuthResponseDto,
     })
-    @SwaggerResponse({ status: 401, description: 'Invalid credentials' })
+    @SwaggerResponse({ status: 401, description: 'Invalid credentials', type: ErrorResponseDto })
     async login(@Body() loginDto: LoginDto) {
         const result = await this.authService.login(loginDto);
         return ApiResponse.success(result, 'Login successful');
@@ -48,7 +49,7 @@ export class AuthController {
         status: 200,
         description: 'Token refreshed successfully',
     })
-    @SwaggerResponse({ status: 401, description: 'Invalid refresh token' })
+    @SwaggerResponse({ status: 401, description: 'Invalid refresh token', type: ErrorResponseDto })
     async refresh(@Body('refresh_token') refreshToken: string) {
         const result = await this.authService.refreshTokens(refreshToken);
         return ApiResponse.success(result, 'Token refreshed successfully');
@@ -60,7 +61,7 @@ export class AuthController {
     @ApiBearerAuth()
     @ApiOperation({ summary: 'User logout' })
     @SwaggerResponse({ status: 200, description: 'Logout successful' })
-    @SwaggerResponse({ status: 401, description: 'Unauthorized' })
+    @SwaggerResponse({ status: 401, description: 'Unauthorized', type: ErrorResponseDto })
     async logout(@CurrentUser('id') userId: string) {
         const result = await this.authService.logout(userId);
         return ApiResponse.success(result, 'Logout successful');
@@ -72,7 +73,7 @@ export class AuthController {
     @ApiBearerAuth()
     @ApiOperation({ summary: 'Verify token and get current user' })
     @SwaggerResponse({ status: 200, description: 'Token is valid' })
-    @SwaggerResponse({ status: 401, description: 'Invalid token' })
+    @SwaggerResponse({ status: 401, description: 'Invalid token', type: ErrorResponseDto })
     async verify(@CurrentUser() user: any) {
         return ApiResponse.success(
             { user },

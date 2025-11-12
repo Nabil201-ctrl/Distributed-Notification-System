@@ -23,6 +23,7 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiResponse, PaginationMeta } from '../common/dto/api-response.dto';
+import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { UserResponse } from './dto/user-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -46,7 +47,7 @@ export class UsersController {
         description: 'User created successfully',
         type: UserResponse,
     })
-    @SwaggerResponse({ status: 409, description: 'User already exists' })
+    @SwaggerResponse({ status: 409, description: 'User already exists', type: ErrorResponseDto })
     async createUser(@Body() createUserDto: CreateUserDto) {
         const user = await this.usersService.createUser(createUserDto);
         return ApiResponse.success(user, 'User created successfully');
@@ -62,7 +63,7 @@ export class UsersController {
         status: 200,
         description: 'Users retrieved successfully',
     })
-    @SwaggerResponse({ status: 403, description: 'Access denied' })
+    @SwaggerResponse({ status: 403, description: 'Access denied', type: ErrorResponseDto })
     async getAllUsers(
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 10,
@@ -95,8 +96,8 @@ export class UsersController {
         description: 'User retrieved successfully',
         type: UserResponse,
     })
-    @SwaggerResponse({ status: 404, description: 'User not found' })
-    @SwaggerResponse({ status: 403, description: 'Access denied' })
+    @SwaggerResponse({ status: 404, description: 'User not found', type: ErrorResponseDto })
+    @SwaggerResponse({ status: 403, description: 'Access denied', type: ErrorResponseDto })
     async getUserById(
         @Param('id') id: string,
         @CurrentUser('id') requestingUserId: string,
@@ -118,8 +119,8 @@ export class UsersController {
         status: 200,
         description: 'User updated successfully',
     })
-    @SwaggerResponse({ status: 404, description: 'User not found' })
-    @SwaggerResponse({ status: 403, description: 'Access denied' })
+    @SwaggerResponse({ status: 404, description: 'User not found', type: ErrorResponseDto })
+    @SwaggerResponse({ status: 403, description: 'Access denied', type: ErrorResponseDto })
     async updateUser(
         @Param('id') id: string,
         @Body() updateUserDto: UpdateUserDto,
@@ -141,8 +142,8 @@ export class UsersController {
     @ApiOperation({ summary: 'Delete user account' })
     @ApiParam({ name: 'id', description: 'User UUID' })
     @SwaggerResponse({ status: 200, description: 'User deleted successfully' })
-    @SwaggerResponse({ status: 404, description: 'User not found' })
-    @SwaggerResponse({ status: 403, description: 'Access denied' })
+    @SwaggerResponse({ status: 404, description: 'User not found', type: ErrorResponseDto })
+    @SwaggerResponse({ status: 403, description: 'Access denied', type: ErrorResponseDto })
     async deleteUser(
         @Param('id') id: string,
         @CurrentUser('id') requestingUserId: string,
@@ -169,8 +170,8 @@ export class UsersController {
         status: 200,
         description: 'Contact info retrieved successfully',
     })
-    @SwaggerResponse({ status: 404, description: 'User not found' })
-    @SwaggerResponse({ status: 403, description: 'Access denied - Service role required' })
+    @SwaggerResponse({ status: 404, description: 'User not found', type: ErrorResponseDto })
+    @SwaggerResponse({ status: 403, description: 'Access denied - Service role required', type: ErrorResponseDto })
     async getUserContactInfo(@Param('id') id: string) {
         const contactInfo = await this.usersService.getUserContactInfo(id);
         return ApiResponse.success(
@@ -184,8 +185,8 @@ export class UsersController {
     @ApiOperation({ summary: 'Update push notification token' })
     @ApiParam({ name: 'id', description: 'User UUID' })
     @SwaggerResponse({ status: 200, description: 'Push token updated' })
-    @SwaggerResponse({ status: 404, description: 'User not found' })
-    @SwaggerResponse({ status: 403, description: 'Access denied' })
+    @SwaggerResponse({ status: 404, description: 'User not found', type: ErrorResponseDto })
+    @SwaggerResponse({ status: 403, description: 'Access denied', type: ErrorResponseDto })
     async updatePushToken(
         @Param('id') id: string,
         @Body('push_token') pushToken: string,
@@ -207,8 +208,8 @@ export class UsersController {
     @ApiOperation({ summary: 'Remove push notification token' })
     @ApiParam({ name: 'id', description: 'User UUID' })
     @SwaggerResponse({ status: 200, description: 'Push token removed' })
-    @SwaggerResponse({ status: 404, description: 'User not found' })
-    @SwaggerResponse({ status: 403, description: 'Access denied' })
+    @SwaggerResponse({ status: 404, description: 'User not found', type: ErrorResponseDto })
+    @SwaggerResponse({ status: 403, description: 'Access denied', type: ErrorResponseDto })
     async removePushToken(
         @Param('id') id: string,
         @CurrentUser('id') requestingUserId: string,
