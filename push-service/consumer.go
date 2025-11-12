@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"os"
 
 	firebase "firebase.google.com/go/v4"
 	"github.com/joho/godotenv"
@@ -12,43 +11,26 @@ import (
 	"google.golang.org/api/option"
 )
 
-const (
-	max_retries          = 5
-	retryDelayMs         = int64(5000)
-	retryExName          = "retry-notifs_ex"
-	retryQueueName       = "retry-notifs_queue"
-	retryQueueRoutingKey = "retried-messages"
-	routingKey           = "notifs"
-	exName               = "push_notifs"
-	dlqRoutingKey        = "failed-messages"
-	dlxName              = "push_notifs_dlx"
-	dlqName              = "push_notifs_dlq"
-	token                = "e2SUbDFyiaLMoIjmSe6bDl:APA91bEYcdOP4yPHLdZdS9ZdHz0wvfZRDZVqXsV1nkLQzm5FmUfJ8yUOKyJYvF8ZTq5wgA4jc800KEUcbQjZRVlMDHVwC8cSX574yZyDqVt5iEVegavJ-YU"
-)
-
-func startConsumer() {
-	err := godotenv.Load("app.env")
+func startConsumer(ch *amqp.Channel) {
+	err := godotenv.Load(".env")
 	if err != nil {
 		log.Println("Note: .env file not found, reading from system environment")
 	}
 
 	c := Consumer{
-		queueName:  "",
-		retryQueue: "retry_notif",
-
+		queueName:     "",
+		retryQueue:    "retry_notif",
 		prefetchCount: 1,
 		workerCount:   5,
 	}
 
-	c.SetUp()
-	defer c.connection.Close()
-	defer c.channel.Close()
+	c.SetUp(ch)
 
 	for r := 0; r < c.workerCount; r++ {
 		if c.channel != nil {
 			go c.newWorker(c.channel, c.queueName, r)
 		} else {
-			log.Fatal("fuck")
+			log.Fatal("couldn't launch workers")
 		}
 	}
 
@@ -57,36 +39,10 @@ func startConsumer() {
 	<-forever
 }
 
-func (c *Consumer) SetUp() {
-	amqpURL := os.Getenv("RABBITMQ_URL")
-	if amqpURL == "" {
-		log.Println("RABBITMQ_URL is not set")
-		return
-	}
-
-	// Dial the server
-	conn, err := amqp.Dial(amqpURL)
-	failOnError(err, "Failed to connect to RabbitMQ")
-	c.connection = conn
-
-	ch, err := conn.Channel()
+func (c *Consumer) SetUp(ch *amqp.Channel) {
 	c.channel = ch
-	failOnError(err, "Failed to open a channel")
-
-	// Declare the main notification exchange
-	err = ch.ExchangeDeclare(
-		exName,   // name
-		"direct", // type
-		true,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments
-	)
-	failOnError(err, "Failed to declare an main exchange")
-
 	// Declare the notification dlx
-	err = ch.ExchangeDeclare(
+	err := ch.ExchangeDeclare(
 		dlxName,  // name
 		"direct", // type (direct, fanout, topic, etc.)
 		true,     // durable
@@ -187,25 +143,7 @@ func (c *Consumer) SetUp() {
 	)
 	failOnError(err, "Failed to bind retry_notifs queue to retry_notifs exchange")
 
-	ctx := context.Background()
-
-	opt := option.WithCredentialsFile("./serviceAccountKey.json")
-
-	config := firebase.Config{
-		ProjectID: "pushservice-8f271",
-	}
-
-	app, err := firebase.NewApp(ctx, &config, opt)
-	if err != nil {
-		log.Fatalf("error initializing app: %v\n", err)
-	}
-
-	client, err := app.Messaging(ctx)
-	if err != nil {
-		log.Fatalf("error getting Messaging client: %v\n", err)
-	}
-	c.client = client
-
+	setUpFirebaseClient(c)
 }
 
 func (c *Consumer) newWorker(ch *amqp.Channel, queueName string, id int) {
@@ -218,7 +156,10 @@ func (c *Consumer) newWorker(ch *amqp.Channel, queueName string, id int) {
 		false,     // no-wait
 		nil,       // args
 	)
-	failOnError(err, "Failed to register a consumer")
+	if err != nil {
+		log.Printf("Worker %d Failed to register as a consumer: %s", id, err)
+		return
+	}
 
 	go func() {
 		for d := range msgs {
@@ -235,10 +176,15 @@ func (c *Consumer) newWorker(ch *amqp.Channel, queueName string, id int) {
 			var notif NotificationRequest
 			err := json.Unmarshal(d.Body, &notif)
 			if err != nil {
-				log.Printf(" [Worker %d] FAILED to unmarshal JSON: %v. Sending to DLX.", id, err)
+				log.Printf("Worker %d FAILED to unmarshal JSON: %v. Sending to DLX.", id, err)
 
 				d.Nack(false, false)
 				continue
+			}
+
+			targetToken := notif.Token
+			if targetToken == "" {
+				targetToken = token
 			}
 
 			err = c.SendNotification(context.Background(), c.client, token, notif)
@@ -280,6 +226,26 @@ func (c *Consumer) newWorker(ch *amqp.Channel, queueName string, id int) {
 			}
 		}
 	}()
+}
+
+func setUpFirebaseClient(c *Consumer) {
+	ctx := context.Background()
+	opt := option.WithCredentialsFile("./serviceAccountKey.json")
+
+	config := firebase.Config{
+		ProjectID: "pushservice-8f271",
+	}
+
+	app, err := firebase.NewApp(ctx, &config, opt)
+	if err != nil {
+		log.Fatalf("error initializing app: %v\n", err)
+	}
+
+	client, err := app.Messaging(ctx)
+	if err != nil {
+		log.Fatalf("error getting Messaging client: %v\n", err)
+	}
+	c.client = client
 }
 
 func failOnError(err error, msg string) {
