@@ -90,23 +90,23 @@ func connectPostgreSQL() {
 	log.Println("✅ Successfully connected to PostgreSQL (Aiven)!")
 }
 
-// connectUpstashRedis connects to your Upstash Redis REST API
-// func connectUpstashRedis() {
-// 	client := upstash.NewClient(
-// 		os.Getenv("UPSTASH_REDIS_REST_URL"),
-// 		os.Getenv("UPSTASH_REDIS_REST_TOKEN"),
-// 	)
+connectUpstashRedis connects to your Upstash Redis REST API
+func connectUpstashRedis() {
+	client := upstash.NewClient(
+		os.Getenv("UPSTASH_REDIS_REST_URL"),
+		os.Getenv("UPSTASH_REDIS_REST_TOKEN"),
+	)
 
-// 	// Ping the server
-// 	ctx := context.Background()
-// 	res, err := client.Ping(ctx)
-// 	if err != nil {
-// 		log.Printf("Failed to ping Upstash Redis: %v\n", err)
-// 		return
-// 	}
+	// Ping the server
+	ctx := context.Background()
+	res, err := client.Ping(ctx)
+	if err != nil {
+		log.Printf("Failed to ping Upstash Redis: %v\n", err)
+		return
+	}
 
-// 	log.Printf("✅ Successfully connected to Upstash Redis! (Ping response: %s)\n", res)
-// }
+	log.Printf("✅ Successfully connected to Upstash Redis! (Ping response: %s)\n", res)
+}
 
 // connectRabbitMQ connects to your CloudAMQP RabbitMQ instance
 func connectRabbitMQ() {

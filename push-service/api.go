@@ -34,10 +34,10 @@ func (p *Publisher) notificationHandler(ctx *gin.Context) {
 
 	err = p.channel.PublishWithContext(
 		context.Background(),
-		"push_notifs", // exchange
-		"notifs",      // routing key
-		false,         // mandatory
-		false,         // immediate
+		exName,   // exchange
+		"notifs", // routing key
+		false,    // mandatory
+		false,    // immediate
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			ContentType:  "text/plain",
