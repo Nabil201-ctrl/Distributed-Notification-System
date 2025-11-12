@@ -15,4 +15,5 @@ export declare class TemplateService {
     update(id: string, updateTemplateDto: UpdateTemplateDto): Promise<Template>;
     remove(id: string): Promise<void>;
     findHistory(templateId: string): Promise<TemplateHistory[]>;
+    private handleUniqueConstraintError;
 }
