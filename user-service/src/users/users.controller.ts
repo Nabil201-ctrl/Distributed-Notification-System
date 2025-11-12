@@ -48,12 +48,8 @@ export class UsersController {
     })
     @SwaggerResponse({ status: 409, description: 'User already exists' })
     async createUser(@Body() createUserDto: CreateUserDto) {
-        try {
-            const user = await this.usersService.createUser(createUserDto);
-            return ApiResponse.success(user, 'User created successfully');
-        } catch (error) {
-            return ApiResponse.error(error.message, 'Failed to create user');
-        }
+        const user = await this.usersService.createUser(createUserDto);
+        return ApiResponse.success(user, 'User created successfully');
     }
 
     @Get()
@@ -72,26 +68,22 @@ export class UsersController {
         @Query('limit') limit: number = 10,
         @CurrentUser('role') role: UserRole,
     ) {
-        try {
-            const { users, total } = await this.usersService.getAllUsers(
-                Number(page),
-                Number(limit),
-                role,
-            );
+        const { users, total } = await this.usersService.getAllUsers(
+            Number(page),
+            Number(limit),
+            role,
+        );
 
-            const meta: PaginationMeta = {
-                total,
-                limit: Number(limit),
-                page: Number(page),
-                total_pages: Math.ceil(total / Number(limit)),
-                has_next: Number(page) * Number(limit) < total,
-                has_previous: Number(page) > 1,
-            };
+        const meta: PaginationMeta = {
+            total,
+            limit: Number(limit),
+            page: Number(page),
+            total_pages: Math.ceil(total / Number(limit)),
+            has_next: Number(page) * Number(limit) < total,
+            has_previous: Number(page) > 1,
+        };
 
-            return ApiResponse.success(users, 'Users retrieved successfully', meta);
-        } catch (error) {
-            return ApiResponse.error(error.message, 'Failed to retrieve users');
-        }
+        return ApiResponse.success(users, 'Users retrieved successfully', meta);
     }
 
     @Get(':id')
@@ -110,16 +102,12 @@ export class UsersController {
         @CurrentUser('id') requestingUserId: string,
         @CurrentUser('role') requestingUserRole: UserRole,
     ) {
-        try {
-            const user = await this.usersService.getUserById(
-                id,
-                requestingUserId,
-                requestingUserRole,
-            );
-            return ApiResponse.success(user, 'User retrieved successfully');
-        } catch (error) {
-            return ApiResponse.error(error.message, 'Failed to retrieve user');
-        }
+        const user = await this.usersService.getUserById(
+            id,
+            requestingUserId,
+            requestingUserRole,
+        );
+        return ApiResponse.success(user, 'User retrieved successfully');
     }
 
     @Put(':id')
@@ -138,17 +126,13 @@ export class UsersController {
         @CurrentUser('id') requestingUserId: string,
         @CurrentUser('role') requestingUserRole: UserRole,
     ) {
-        try {
-            const user = await this.usersService.updateUser(
-                id,
-                updateUserDto,
-                requestingUserId,
-                requestingUserRole,
-            );
-            return ApiResponse.success(user, 'User updated successfully');
-        } catch (error) {
-            return ApiResponse.error(error.message, 'Failed to update user');
-        }
+        const user = await this.usersService.updateUser(
+            id,
+            updateUserDto,
+            requestingUserId,
+            requestingUserRole,
+        );
+        return ApiResponse.success(user, 'User updated successfully');
     }
 
     @Delete(':id')
@@ -164,16 +148,12 @@ export class UsersController {
         @CurrentUser('id') requestingUserId: string,
         @CurrentUser('role') requestingUserRole: UserRole,
     ) {
-        try {
-            await this.usersService.deleteUser(
-                id,
-                requestingUserId,
-                requestingUserRole,
-            );
-            return ApiResponse.success(null, 'User deleted successfully');
-        } catch (error) {
-            return ApiResponse.error(error.message, 'Failed to delete user');
-        }
+        await this.usersService.deleteUser(
+            id,
+            requestingUserId,
+            requestingUserRole,
+        );
+        return ApiResponse.success(null, 'User deleted successfully');
     }
 
     @Get(':id/contact-info')
@@ -192,18 +172,11 @@ export class UsersController {
     @SwaggerResponse({ status: 404, description: 'User not found' })
     @SwaggerResponse({ status: 403, description: 'Access denied - Service role required' })
     async getUserContactInfo(@Param('id') id: string) {
-        try {
-            const contactInfo = await this.usersService.getUserContactInfo(id);
-            return ApiResponse.success(
-                contactInfo,
-                'Contact info retrieved successfully',
-            );
-        } catch (error) {
-            return ApiResponse.error(
-                error.message,
-                'Failed to retrieve contact info',
-            );
-        }
+        const contactInfo = await this.usersService.getUserContactInfo(id);
+        return ApiResponse.success(
+            contactInfo,
+            'Contact info retrieved successfully',
+        );
     }
 
     @Put(':id/push-token')
@@ -219,17 +192,13 @@ export class UsersController {
         @CurrentUser('id') requestingUserId: string,
         @CurrentUser('role') requestingUserRole: UserRole,
     ) {
-        try {
-            const user = await this.usersService.updatePushToken(
-                id,
-                pushToken,
-                requestingUserId,
-                requestingUserRole,
-            );
-            return ApiResponse.success(user, 'Push token updated successfully');
-        } catch (error) {
-            return ApiResponse.error(error.message, 'Failed to update push token');
-        }
+        const user = await this.usersService.updatePushToken(
+            id,
+            pushToken,
+            requestingUserId,
+            requestingUserRole,
+        );
+        return ApiResponse.success(user, 'Push token updated successfully');
     }
 
     @Delete(':id/push-token')
@@ -245,15 +214,11 @@ export class UsersController {
         @CurrentUser('id') requestingUserId: string,
         @CurrentUser('role') requestingUserRole: UserRole,
     ) {
-        try {
-            await this.usersService.removePushToken(
-                id,
-                requestingUserId,
-                requestingUserRole,
-            );
-            return ApiResponse.success(null, 'Push token removed successfully');
-        } catch (error) {
-            return ApiResponse.error(error.message, 'Failed to remove push token');
-        }
+        await this.usersService.removePushToken(
+            id,
+            requestingUserId,
+            requestingUserRole,
+        );
+        return ApiResponse.success(null, 'Push token removed successfully');
     }
 }

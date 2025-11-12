@@ -5,7 +5,6 @@ import {
     HttpCode,
     HttpStatus,
     UseGuards,
-    Request,
 } from '@nestjs/common';
 import {
     ApiTags,
@@ -37,12 +36,8 @@ export class AuthController {
     })
     @SwaggerResponse({ status: 401, description: 'Invalid credentials' })
     async login(@Body() loginDto: LoginDto) {
-        try {
-            const result = await this.authService.login(loginDto);
-            return ApiResponse.success(result, 'Login successful');
-        } catch (error) {
-            return ApiResponse.error(error.message, 'Login failed');
-        }
+        const result = await this.authService.login(loginDto);
+        return ApiResponse.success(result, 'Login successful');
     }
 
     @Public()
@@ -55,12 +50,8 @@ export class AuthController {
     })
     @SwaggerResponse({ status: 401, description: 'Invalid refresh token' })
     async refresh(@Body('refresh_token') refreshToken: string) {
-        try {
-            const result = await this.authService.refreshTokens(refreshToken);
-            return ApiResponse.success(result, 'Token refreshed successfully');
-        } catch (error) {
-            return ApiResponse.error(error.message, 'Token refresh failed');
-        }
+        const result = await this.authService.refreshTokens(refreshToken);
+        return ApiResponse.success(result, 'Token refreshed successfully');
     }
 
     @Post('logout')
@@ -71,12 +62,8 @@ export class AuthController {
     @SwaggerResponse({ status: 200, description: 'Logout successful' })
     @SwaggerResponse({ status: 401, description: 'Unauthorized' })
     async logout(@CurrentUser('id') userId: string) {
-        try {
-            const result = await this.authService.logout(userId);
-            return ApiResponse.success(result, 'Logout successful');
-        } catch (error) {
-            return ApiResponse.error(error.message, 'Logout failed');
-        }
+        const result = await this.authService.logout(userId);
+        return ApiResponse.success(result, 'Logout successful');
     }
 
     @Post('verify')
