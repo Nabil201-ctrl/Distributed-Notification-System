@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, QueryFailedError } from 'typeorm';
 import { Template } from './entities/template.entity';
 import { TemplateHistory } from './entities/template-history.entity';
 import { CreateTemplateDto } from './dto/create-template.dto';
@@ -19,10 +19,14 @@ export class TemplateService {
 
   async create(createTemplateDto: CreateTemplateDto): Promise<Template> {
     const template = this.templateRepository.create(createTemplateDto);
-    const savedTemplate = await this.templateRepository.save(template);
-    // Optionally, publish an event to RabbitMQ
-    this.client.emit('template.created', savedTemplate);
-    return savedTemplate;
+    try {
+      const savedTemplate = await this.templateRepository.save(template);
+      // Optionally, publish an event to RabbitMQ
+      this.client.emit('template.created', savedTemplate);
+      return savedTemplate;
+    } catch (error) {
+      this.handleUniqueConstraintError(error, createTemplateDto.name);
+    }
   }
 
   async findAll(): Promise<Template[]> {
@@ -43,6 +47,15 @@ export class TemplateService {
       throw new NotFoundException(`Template with ID "${id}" not found`);
     }
 
+    if (updateTemplateDto.name && updateTemplateDto.name !== existingTemplate.name) {
+      const conflictingTemplate = await this.templateRepository.findOne({
+        where: { name: updateTemplateDto.name },
+      });
+      if (conflictingTemplate) {
+        throw new ConflictException(`Template name "${updateTemplateDto.name}" already exists`);
+      }
+    }
+
     // Save current version to history before updating
     const historyEntry = this.templateHistoryRepository.create({
       templateId: existingTemplate.id,
@@ -54,14 +67,18 @@ export class TemplateService {
     await this.templateHistoryRepository.save(historyEntry);
 
     // Update the template
-    const updatedTemplate = await this.templateRepository.save({
-      ...existingTemplate,
-      ...updateTemplateDto,
-    });
+    try {
+      const updatedTemplate = await this.templateRepository.save({
+        ...existingTemplate,
+        ...updateTemplateDto,
+      });
 
-    // Optionally, publish an event to RabbitMQ
-    this.client.emit('template.updated', updatedTemplate);
-    return updatedTemplate;
+      // Optionally, publish an event to RabbitMQ
+      this.client.emit('template.updated', updatedTemplate);
+      return updatedTemplate;
+    } catch (error) {
+      this.handleUniqueConstraintError(error, updateTemplateDto.name ?? existingTemplate.name);
+    }
   }
 
   async remove(id: string): Promise<void> {
@@ -79,5 +96,15 @@ export class TemplateService {
       throw new NotFoundException(`Template with ID "${templateId}" not found`);
     }
     return this.templateHistoryRepository.find({ where: { templateId }, order: { versionedAt: 'DESC' } });
+  }
+
+  private handleUniqueConstraintError(error: unknown, templateName: string): never {
+    if (error instanceof QueryFailedError) {
+      const driverError = error.driverError as { code?: string };
+      if (driverError?.code === '23505') {
+        throw new ConflictException(`Template name "${templateName}" already exists`);
+      }
+    }
+    throw error;
   }
 }

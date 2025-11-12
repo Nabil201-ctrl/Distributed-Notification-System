@@ -30,9 +30,14 @@ let TemplateService = class TemplateService {
     }
     async create(createTemplateDto) {
         const template = this.templateRepository.create(createTemplateDto);
-        const savedTemplate = await this.templateRepository.save(template);
-        this.client.emit('template.created', savedTemplate);
-        return savedTemplate;
+        try {
+            const savedTemplate = await this.templateRepository.save(template);
+            this.client.emit('template.created', savedTemplate);
+            return savedTemplate;
+        }
+        catch (error) {
+            this.handleUniqueConstraintError(error, createTemplateDto.name);
+        }
     }
     async findAll() {
         return this.templateRepository.find();
@@ -49,6 +54,14 @@ let TemplateService = class TemplateService {
         if (!existingTemplate) {
             throw new common_1.NotFoundException(`Template with ID "${id}" not found`);
         }
+        if (updateTemplateDto.name && updateTemplateDto.name !== existingTemplate.name) {
+            const conflictingTemplate = await this.templateRepository.findOne({
+                where: { name: updateTemplateDto.name },
+            });
+            if (conflictingTemplate) {
+                throw new common_1.ConflictException(`Template name "${updateTemplateDto.name}" already exists`);
+            }
+        }
         const historyEntry = this.templateHistoryRepository.create({
             templateId: existingTemplate.id,
             name: existingTemplate.name,
@@ -57,12 +70,17 @@ let TemplateService = class TemplateService {
             variables: existingTemplate.variables,
         });
         await this.templateHistoryRepository.save(historyEntry);
-        const updatedTemplate = await this.templateRepository.save({
-            ...existingTemplate,
-            ...updateTemplateDto,
-        });
-        this.client.emit('template.updated', updatedTemplate);
-        return updatedTemplate;
+        try {
+            const updatedTemplate = await this.templateRepository.save({
+                ...existingTemplate,
+                ...updateTemplateDto,
+            });
+            this.client.emit('template.updated', updatedTemplate);
+            return updatedTemplate;
+        }
+        catch (error) {
+            this.handleUniqueConstraintError(error, updateTemplateDto.name ?? existingTemplate.name);
+        }
     }
     async remove(id) {
         const result = await this.templateRepository.delete(id);
@@ -77,6 +95,15 @@ let TemplateService = class TemplateService {
             throw new common_1.NotFoundException(`Template with ID "${templateId}" not found`);
         }
         return this.templateHistoryRepository.find({ where: { templateId }, order: { versionedAt: 'DESC' } });
+    }
+    handleUniqueConstraintError(error, templateName) {
+        if (error instanceof typeorm_2.QueryFailedError) {
+            const driverError = error.driverError;
+            if (driverError?.code === '23505') {
+                throw new common_1.ConflictException(`Template name "${templateName}" already exists`);
+            }
+        }
+        throw error;
     }
 };
 exports.TemplateService = TemplateService;

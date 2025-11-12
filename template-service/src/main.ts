@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,6 +13,22 @@ async function bootstrap() {
     transform: true, // Automatically transform payloads to DTO instances
   }));
 
-  await app.listen(process.env.PORT ?? 3000);
+  const config = new DocumentBuilder()
+    .setTitle('Template Service API')
+    .setDescription('CRUD endpoints for notification templates and their version history.')
+    .setVersion('1.0')
+    .addTag('Templates', 'Manage templates and their revision history')
+    .addTag('Health', 'Service health endpoints')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document, {
+    swaggerOptions: { persistAuthorization: true },
+  });
+
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port);
+  console.log(`Template Service running on port ${port}`);
+  console.log(`Swagger docs available at http://localhost:${port}/docs`);
 }
 bootstrap();
