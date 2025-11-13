@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"push_service/api"
+	"push_service/consumer"
+	"push_service/models"
+	"push_service/util"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/jackc/pgx/v5/stdlib" // PostgreSQL driver
@@ -25,19 +29,19 @@ func main() {
 	}
 
 	conn, err := amqp.Dial(amqpURL)
-	failOnError(err, "Failed to connect to RabbitMQ")
+	util.FailOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
 	pubChannel, err := conn.Channel()
-	failOnError(err, "Failed to open publisher channel")
+	util.FailOnError(err, "Failed to open publisher channel")
 	defer pubChannel.Close()
 
 	conChannel, err := conn.Channel()
-	failOnError(err, "Failed to open consumer channel")
+	util.FailOnError(err, "Failed to open consumer channel")
 	defer conChannel.Close()
 
 	err = conChannel.ExchangeDeclare(
-		exName,
+		models.ExName,
 		"direct",
 		true,  // durable
 		false, // auto-deleted
@@ -45,17 +49,19 @@ func main() {
 		false, // no-wait
 		nil,   // arguments
 	)
-	failOnError(err, "Failed to declare main exchange")
+	util.FailOnError(err, "Failed to declare main exchange")
 
-	p := &Publisher{
-		channel: pubChannel,
+	p := models.Publisher{
+		Channel: pubChannel,
 	}
 
 	log.Println("[Main] Starting background consumer workers...")
-	go startConsumer(conChannel)
+	go consumer.StartConsumer(conChannel)
 
 	router := gin.Default()
-	router.POST("/notification", p.notificationHandler)
+	router.POST("/notification", func(ctx *gin.Context) {
+		api.NotificationHandler(&p, ctx)
+	})
 
 	log.Println("API Starting API server on :8080")
 	router.Run(":8080")
