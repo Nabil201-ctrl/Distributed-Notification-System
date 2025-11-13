@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"push_service/models"
-	sendNotification "push_service/sendNotifcation"
+	sendNotification "push_service/sendNotification"
 	"push_service/util"
 
 	firebase "firebase.google.com/go/v4"
