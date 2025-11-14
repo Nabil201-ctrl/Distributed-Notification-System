@@ -27,7 +27,6 @@ export class UsersService {
         const existingUser = await this.userRepository.findOne({
             where: { email: createUserDto.email },
         });
-
         if (existingUser) {
             throw new ConflictException('User with this email already exists');
         }
@@ -46,10 +45,31 @@ export class UsersService {
             email: createUserDto.preferences.email,
             push: createUserDto.preferences.push,
         });
-
         user.preferences = preferences;
 
         const savedUser = await this.userRepository.save(user);
+
+        const notificationPayload = {
+            template: 'welcome_email',
+            variables: { name: savedUser.name },
+            timestamp: new Date().toISOString(),
+        };
+
+        if (savedUser.preferences.email) {
+            await this.rabbitMQService.publishNotificationRequest(
+                savedUser.id,
+                'email',
+                notificationPayload
+            );
+        }
+
+        if (savedUser.preferences.push && savedUser.push_token) {
+            await this.rabbitMQService.publishNotificationRequest(
+                savedUser.id,
+                'push',
+                notificationPayload
+            );
+        }
 
         await this.rabbitMQService.publishUserEvent({
             event_type: 'user.created',
@@ -68,6 +88,7 @@ export class UsersService {
 
         return savedUser;
     }
+
 
     async getUserById(
         id: string,
