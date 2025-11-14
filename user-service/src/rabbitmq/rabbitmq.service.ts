@@ -132,9 +132,19 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
                 return false;
             }
 
-            const routingKey = notificationType === 'email' ? 'email' : 'push';
-            const queue = notificationType === 'email' ? this.EMAIL_QUEUE : this.PUSH_QUEUE;
+            const EXCHANGE = this.EXCHANGE;
+            const EMAIL_QUEUE = this.EMAIL_QUEUE;
+            const PUSH_QUEUE = this.PUSH_QUEUE;
 
+            await this.channel.assertExchange(EXCHANGE, 'direct', { durable: true });
+
+            await this.channel.assertQueue(EMAIL_QUEUE, { durable: true });
+            await this.channel.assertQueue(PUSH_QUEUE, { durable: true });
+
+            await this.channel.bindQueue(EMAIL_QUEUE, EXCHANGE, 'email');
+            await this.channel.bindQueue(PUSH_QUEUE, EXCHANGE, 'push');
+
+            const routingKey = notificationType === 'email' ? 'email' : 'push';
             const message = JSON.stringify({
                 user_id: userId,
                 ...data,
@@ -142,7 +152,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
             });
 
             const published = this.channel.publish(
-                this.EXCHANGE,
+                EXCHANGE,
                 routingKey,
                 Buffer.from(message),
                 {
@@ -162,6 +172,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
             return false;
         }
     }
+
 
     async getQueueInfo(queueName: string): Promise<any> {
         try {
