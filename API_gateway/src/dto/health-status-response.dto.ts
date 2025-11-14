@@ -1,20 +1,33 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-class HealthServicesStatusDto {
-  @ApiProperty({ description: 'Indicates whether RabbitMQ is reachable' })
-  rabbitmq: boolean;
+class ServiceHealth {
+  @ApiProperty({ example: 'up' })
+  status: string;
 
-  @ApiProperty({ description: 'Indicates whether Redis is reachable' })
-  redis: boolean;
+  @ApiProperty({ example: 123 })
+  responseTime?: number;
 }
 
 export class HealthStatusResponseDto {
-  @ApiProperty({ enum: ['healthy', 'unhealthy'] })
-  status: 'healthy' | 'unhealthy';
+  @ApiProperty({ example: 'healthy' })
+  status: string;
 
-  @ApiProperty({ description: 'ISO timestamp of when the health check was performed' })
+  @ApiProperty({ example: '2024-01-15T10:30:00.000Z' })
   timestamp: string;
 
-  @ApiProperty({ type: () => HealthServicesStatusDto })
-  services: HealthServicesStatusDto;
+  @ApiProperty({ example: 12345.67 })
+  uptime: number;
+
+  @ApiProperty({
+    example: {
+      rabbitmq: { status: 'up', responseTime: 45 },
+      redis: { status: 'up', responseTime: 23 },
+      user_service: { status: 'up', responseTime: 150 },
+    },
+  })
+  services: {
+    rabbitmq: ServiceHealth;
+    redis: ServiceHealth;
+    user_service: ServiceHealth;
+  };
 }

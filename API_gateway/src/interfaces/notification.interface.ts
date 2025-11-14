@@ -12,22 +12,27 @@ export interface PushRequest {
   variables: Record<string, any>;
 }
 
-// Interface for notification status
+export interface QueueMessage {
+  correlation_id: string;
+  user_id?: string;
+  recipient: string;
+  template_id?: string;
+  variables?: Record<string, any>;
+  type: 'email' | 'push';
+  priority: 'low' | 'normal' | 'high';
+  timestamp: string;
+  metadata?: Record<string, any>;
+}
+
 export interface NotificationStatus {
   correlation_id: string;
-  status: 'queued' | 'processing' | 'sent' | 'failed';
+  status: 'queued' | 'processing' | 'sent' | 'failed' | 'bounced';
   type: 'email' | 'push';
   user_id: string;
   created_at: string;
   updated_at: string;
-}
-
-// Interface for RabbitMQ message
-export interface QueueMessage {
-  correlation_id: string;
-  user_id: string;
-  template_id: string;
-  variables: Record<string, any>;
-  type: 'email' | 'push';
-  timestamp: string;
+  sent_at?: string;
+  retry_count: number;
+  error_message?: string;
+  metadata?: Record<string, any>;
 }

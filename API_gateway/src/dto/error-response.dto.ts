@@ -4,6 +4,9 @@ export class ErrorResponseDto {
   @ApiProperty({ example: false })
   success: boolean;
 
-  @ApiProperty({ example: 'Internal server error' })
+  @ApiProperty({ example: 'Validation failed' })
   error: string;
+
+  @ApiProperty({ example: 'Failed to queue notification' })
+  message: string;
 }
