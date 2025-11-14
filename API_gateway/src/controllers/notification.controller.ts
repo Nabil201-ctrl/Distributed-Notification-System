@@ -87,7 +87,7 @@ export class NotificationController {
         throw new UnauthorizedException('Missing Authorization header');
       }
 
-      const token = authHeader.split(' ')[1];
+      const token = process.env.SERVICE_AUTH_TOKEN
       if (!token) {
         throw new UnauthorizedException('Invalid Authorization header');
       }
@@ -235,7 +235,7 @@ export class NotificationController {
       this.validatePushRequest(request);
 
       
-      const token = authHeader?.split(' ')[1];
+      const token = process.env.SERVICE_AUTH_TOKEN
 
       if (!request.user_id) {
         throw new HttpException(
