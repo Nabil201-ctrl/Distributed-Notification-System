@@ -139,7 +139,17 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
             await this.channel.assertExchange(EXCHANGE, 'direct', { durable: true });
 
             await this.channel.assertQueue(EMAIL_QUEUE, { durable: true });
-            await this.channel.assertQueue(PUSH_QUEUE, { durable: true });
+            await this.channel.assertQueue(PUSH_QUEUE, {
+                durable: true, arguments: {
+                    "x-dead-letter-exchange": "push_notifs_dlx",
+                    "x-dead-letter-routing-key": "failed-messages",
+                    "x-queue-type": "classic",
+                    "expires": 2419200000,
+                    "max-length": 10000,
+                    "max-length-bytes": 1073741824,
+                    "queue-mode": "lazy",
+                },
+            });
 
             await this.channel.bindQueue(EMAIL_QUEUE, EXCHANGE, 'email');
             await this.channel.bindQueue(PUSH_QUEUE, EXCHANGE, 'push');

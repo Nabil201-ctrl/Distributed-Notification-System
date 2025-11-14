@@ -10,6 +10,7 @@ import { HealthController } from '../controllers/health.controller';
 import { TestEmailController } from '../controllers/test-email.controller';
 import { EmailLogService } from '../services/email-log.service';
 import { EmailsController } from '../controllers/emails.controller';
+import { EmailQueueListenerService } from '../services/listener.service';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { EmailsController } from '../controllers/emails.controller';
     MailerService,
     NotificationStatusService,
     EmailLogService,
+    EmailQueueListenerService
   ],
 })
 export class EmailModule {}
