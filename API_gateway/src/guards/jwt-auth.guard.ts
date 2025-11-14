@@ -12,7 +12,7 @@ import * as jwt from 'jsonwebtoken';
 export const IS_PUBLIC_KEY = 'isPublic';
 
 interface JwtPayload {
-    sub: string; // user id
+    sub: string; 
     email: string;
     role: string;
     type: 'access' | 'refresh';
@@ -37,7 +37,7 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     canActivate(context: ExecutionContext): boolean {
-        // Check if route is marked as public
+        
         const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
             context.getHandler(),
             context.getClass(),
@@ -57,19 +57,19 @@ export class JwtAuthGuard implements CanActivate {
         try {
             const payload = jwt.verify(token, this.jwtSecret) as JwtPayload;
 
-            // Verify it's an access token (not refresh)
+            
             if (payload.type !== 'access') {
                 throw new UnauthorizedException('Invalid token type');
             }
 
-            // Attach user info to request
+            
             request.user = {
                 id: payload.sub,
                 email: payload.email,
                 role: payload.role,
             };
 
-            // Add correlation ID for tracing
+            
             if (!request.headers['x-correlation-id']) {
                 request.correlationId = this.generateCorrelationId();
             } else {

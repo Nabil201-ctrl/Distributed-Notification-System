@@ -15,13 +15,13 @@ export class TemplateService {
     @InjectRepository(TemplateHistory)
     private readonly templateHistoryRepository: Repository<TemplateHistory>,
     @Inject('RABBITMQ_SERVICE') private readonly client: ClientProxy,
-  ) {}
+  ) { }
 
   async create(createTemplateDto: CreateTemplateDto): Promise<Template> {
     const template = this.templateRepository.create(createTemplateDto);
     try {
       const savedTemplate = await this.templateRepository.save(template);
-      // Optionally, publish an event to RabbitMQ
+      
       this.client.emit('template.created', savedTemplate);
       return savedTemplate;
     } catch (error) {
@@ -32,6 +32,15 @@ export class TemplateService {
   async findAll(): Promise<Template[]> {
     return this.templateRepository.find();
   }
+
+  async findByName(name: string): Promise<Template> {
+    const template = await this.templateRepository.findOne({ where: { name } });
+    if (!template) {
+      throw new NotFoundException(`Template with name "${name}" not found`);
+    }
+    return template;
+  }
+
 
   async findOne(id: string): Promise<Template> {
     const template = await this.templateRepository.findOne({ where: { id } });
@@ -56,7 +65,7 @@ export class TemplateService {
       }
     }
 
-    // Save current version to history before updating
+    
     const historyEntry = this.templateHistoryRepository.create({
       templateId: existingTemplate.id,
       name: existingTemplate.name,
@@ -66,14 +75,14 @@ export class TemplateService {
     });
     await this.templateHistoryRepository.save(historyEntry);
 
-    // Update the template
+    
     try {
       const updatedTemplate = await this.templateRepository.save({
         ...existingTemplate,
         ...updateTemplateDto,
       });
 
-      // Optionally, publish an event to RabbitMQ
+      
       this.client.emit('template.updated', updatedTemplate);
       return updatedTemplate;
     } catch (error) {
@@ -86,7 +95,7 @@ export class TemplateService {
     if (result.affected === 0) {
       throw new NotFoundException(`Template with ID "${id}" not found`);
     }
-    // Optionally, publish an event to RabbitMQ
+    
     this.client.emit('template.deleted', { id });
   }
 

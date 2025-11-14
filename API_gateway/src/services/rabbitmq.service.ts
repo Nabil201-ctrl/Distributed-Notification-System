@@ -38,7 +38,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
         heartbeat: 60,
       });
 
-      // Handle connection events
+      
       this.connection.on('error', (err) => {
         this.logger.error('RabbitMQ connection error:', err);
         this.isConnected = false;
@@ -53,17 +53,17 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       this.channel = await this.connection.createChannel();
       await this.channel.prefetch(1);
 
-      // Declare exchange
+      
       await this.channel.assertExchange(this.EXCHANGE, 'direct', {
         durable: true,
       });
 
-      // Declare failed/dead-letter queue first
+      
       await this.channel.assertQueue(this.FAILED_QUEUE, {
         durable: true,
       });
 
-      // Declare email queue with DLX
+      
       await this.channel.assertQueue(this.EMAIL_QUEUE, {
         durable: true,
         arguments: {
@@ -72,7 +72,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
         },
       });
 
-      // Declare push queue with DLX
+      
       await this.channel.assertQueue(this.PUSH_QUEUE, {
         durable: true,
         arguments: {
@@ -81,7 +81,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
         },
       });
 
-      // Bind queues to exchange
+      
       await this.channel.bindQueue(this.EMAIL_QUEUE, this.EXCHANGE, 'email');
       await this.channel.bindQueue(this.PUSH_QUEUE, this.EXCHANGE, 'push');
       await this.channel.bindQueue(this.FAILED_QUEUE, this.EXCHANGE, 'failed');
@@ -91,7 +91,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       this.logger.error('Failed to connect to RabbitMQ:', error);
       this.isConnected = false;
-      // Retry connection after 5 seconds
+      
       setTimeout(() => this.connect(), 5000);
     }
   }
@@ -120,7 +120,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       const routingKey = type;
       const messageBuffer = Buffer.from(JSON.stringify(message));
 
-      // Set priority based on message priority
+      
       const priority =
         message.priority === 'high' ? 10 : message.priority === 'normal' ? 5 : 1;
 

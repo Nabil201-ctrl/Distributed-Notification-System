@@ -22,11 +22,11 @@ export class MailerService {
     const from = payload.from ?? this.defaultFrom;
     const messageId = `email_${Date.now()}_${randomUUID()}`;
 
-    // TODO: Integrate with real provider (SendGrid, SES, etc.)
+    
     this.logger.log(`Sending email to ${payload.to} from ${from} with subject "${payload.subject}"`);
     this.logger.verbose(payload.html);
 
-    // Simulate async provider latency
+    
     await new Promise(resolve => setTimeout(resolve, 200));
 
     this.logger.log(`Email dispatched with message id ${messageId}`);

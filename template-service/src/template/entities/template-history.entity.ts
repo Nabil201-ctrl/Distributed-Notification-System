@@ -13,7 +13,7 @@ export class TemplateHistory {
 
   @ApiProperty({ description: 'Reference to the template ID', example: '433aaf14-1f39-44cc-a48d-1cc779204081' })
   @Column()
-  templateId: string; // Foreign key to Template
+  templateId: string; 
 
   @ApiProperty({ example: 'welcome_email' })
   @Column()
@@ -37,5 +37,5 @@ export class TemplateHistory {
 
   @ApiProperty({ description: 'When this version was created', example: '2025-11-12T09:11:06.010Z' })
   @CreateDateColumn()
-  versionedAt: Date; // Timestamp when this version was created
+  versionedAt: Date; 
 }

@@ -1,11 +1,11 @@
-// Interface for email notification request
+
 export interface EmailRequest {
   user_id: string;
   template_id: string;
   variables: Record<string, any>;
 }
 
-// Interface for push notification request  
+
 export interface PushRequest {
   user_id: string;
   template_id: string;

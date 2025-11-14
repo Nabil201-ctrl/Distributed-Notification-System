@@ -14,14 +14,14 @@ export class Template {
 
   @ApiProperty({ description: 'Channel type such as email, sms or push', example: 'email' })
   @Column()
-  type: string; // e.g., 'email', 'sms', 'push'
+  type: string; 
 
   @ApiProperty({
     description: 'Template body that supports placeholder variables',
     example: '<p>Hello {{name}}, welcome aboard!</p>',
   })
   @Column()
-  body: string; // The actual template content
+  body: string; 
 
   @ApiProperty({
     description: 'JSON object describing variables embedded in the template',
@@ -30,7 +30,7 @@ export class Template {
     additionalProperties: { type: 'string' }
   })
   @Column('jsonb', { nullable: true })
-  variables: Record<string, any>; // JSON object for template variables
+  variables: Record<string, any>; 
 
   @ApiProperty({ description: 'Creation timestamp', example: '2025-11-12T09:11:06.010Z' })
   @CreateDateColumn()

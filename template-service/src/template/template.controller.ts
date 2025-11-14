@@ -9,7 +9,7 @@ import { TemplateHistory } from './entities/template-history.entity';
 @ApiTags('Templates')
 @Controller('templates')
 export class TemplateController {
-  constructor(private readonly templateService: TemplateService) {}
+  constructor(private readonly templateService: TemplateService) { }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -38,6 +38,17 @@ export class TemplateController {
   findAll(): Promise<Template[]> {
     return this.templateService.findAll();
   }
+
+  
+  @Get('name/:name')
+  @ApiOperation({ summary: 'Get a template by name' })
+  @ApiParam({ name: 'name', description: 'Template name' })
+  @ApiResponse({ status: 200, description: 'Template found', type: Template })
+  @ApiResponse({ status: 404, description: 'Template not found' })
+  findByName(@Param('name') name: string): Promise<Template> {
+    return this.templateService.findByName(name);
+  }
+
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a template by ID' })

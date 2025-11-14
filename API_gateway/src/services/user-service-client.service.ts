@@ -37,7 +37,7 @@ export class UserServiceClient {
                         Authorization: `Bearer ${token}`,
                         'Content-Type': 'application/json',
                     },
-                    signal: AbortSignal.timeout(5000), // 5 second timeout
+                    signal: AbortSignal.timeout(5000), 
                 },
             );
 

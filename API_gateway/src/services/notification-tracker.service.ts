@@ -82,13 +82,13 @@ export class NotificationTrackerService {
       userId,
     );
 
-    // Sort by created_at (newest first)
+    
     allNotifications.sort(
       (a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
 
-    // Paginate
+    
     const start = (page - 1) * limit;
     const paginatedNotifications = allNotifications.slice(start, start + limit);
 

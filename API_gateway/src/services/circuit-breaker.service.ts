@@ -16,7 +16,7 @@ class CircuitBreaker {
   constructor(
     private readonly name: string,
     private readonly threshold: number = 5,
-    private readonly timeout: number = 60000, // 1 minute
+    private readonly timeout: number = 60000, 
     private readonly halfOpenRequests: number = 3,
   ) {}
 

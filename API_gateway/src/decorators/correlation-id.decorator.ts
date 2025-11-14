@@ -10,7 +10,7 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
  * @example
  * async sendEmail(@CorrelationId() correlationId: string) {
  *   console.log('Correlation ID:', correlationId);
- *   // Use for logging, tracking, etc.
+ *   
  * }
  */
 export const CorrelationId = createParamDecorator(

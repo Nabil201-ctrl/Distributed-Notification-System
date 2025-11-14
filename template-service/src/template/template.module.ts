@@ -8,10 +8,10 @@ import { TemplateHistory } from './entities/template-history.entity';
 
 @Module({
   imports: [
-    // TypeORM entities for templates and their version history
+    
     TypeOrmModule.forFeature([Template, TemplateHistory]),
 
-    // RabbitMQ client for publishing template events
+    
     ClientsModule.register([
       {
         name: 'RABBITMQ_SERVICE',
@@ -24,8 +24,8 @@ import { TemplateHistory } from './entities/template-history.entity';
       },
     ]),
   ],
-  controllers: [TemplateController], // Handles REST endpoints for templates
-  providers: [TemplateService],       // Business logic for templates
-  exports: [TemplateService],         // Allows other modules to use TemplateService
+  controllers: [TemplateController], 
+  providers: [TemplateService],       
+  exports: [TemplateService],         
 })
 export class TemplateModule {}

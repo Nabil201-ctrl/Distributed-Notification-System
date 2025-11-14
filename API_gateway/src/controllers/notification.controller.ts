@@ -81,7 +81,6 @@ export class NotificationController {
     @Headers('authorization') authHeader: string,
   ) {
     try {
-      // Validate request
       this.validateEmailRequest(request);
 
       if (!authHeader) {
@@ -102,16 +101,14 @@ export class NotificationController {
       let checkPreferences = false;
       let actualUserId = request.user_id || user.id;
 
-      // If user_id provided, check preferences and get email from User Service
       if (request.user_id) {
         try {
-          // Forward JWT to User Service (Gateway doesn't authenticate itself)
           const userInfo = await this.userServiceClient.getUserContactInfo(
             request.user_id,
             token,
           );
 
-          // Check if user has email enabled
+          
           if (!userInfo.preferences.email) {
             return {
               success: false,
@@ -123,7 +120,7 @@ export class NotificationController {
           userEmail = userInfo.email;
           checkPreferences = true;
         } catch (error) {
-          // If user service fails, fall back to provided email if available
+          
           if (!request.to) {
             throw new HttpException(
               {
@@ -138,14 +135,14 @@ export class NotificationController {
         }
       }
 
-      // Use provided correlation ID or generate new one
+      
       const notificationId = correlationId || this.trackerService.generateCorrelationId();
 
       if (!userEmail) {
         throw new BadRequestException('User does not have a valid email');
       }
 
-      // Prepare message for RabbitMQ
+      
       const message: QueueMessage = {
         correlation_id: notificationId,
         user_id: actualUserId,
@@ -159,15 +156,15 @@ export class NotificationController {
           subject: request.subject,
           body: request.body,
           template_name: request.template_name,
-          sent_by: user.id, // Track who sent it
+          sent_by: user.id, 
         },
       };
 
-      // Publish to email queue
+      
       const published = await this.rabbitMQService.publishMessage('email', message);
 
       if (published) {
-        // Record in tracker
+        
         await this.trackerService.recordNotificationQueued(
           notificationId,
           'email',
@@ -234,10 +231,10 @@ export class NotificationController {
     @Headers('authorization') authHeader: string,
   ) {
     try {
-      // Validate request
+      
       this.validatePushRequest(request);
 
-      // Extract token to forward to User Service
+      
       const token = authHeader?.split(' ')[1];
 
       if (!request.user_id) {
@@ -250,13 +247,13 @@ export class NotificationController {
         );
       }
 
-      // Forward JWT to User Service to get contact info
+      
       const userInfo = await this.userServiceClient.getUserContactInfo(
         request.user_id,
         token,
       );
 
-      // Check if user has push enabled
+      
       if (!userInfo.preferences.push) {
         return {
           success: false,
@@ -265,7 +262,7 @@ export class NotificationController {
         };
       }
 
-      // Check if user has push token
+      
       if (!userInfo.push_token) {
         return {
           success: false,
@@ -274,10 +271,10 @@ export class NotificationController {
         };
       }
 
-      // Use provided correlation ID or generate new one
+      
       const notificationId = correlationId || this.trackerService.generateCorrelationId();
 
-      // Prepare message for RabbitMQ
+      
       const message: QueueMessage = {
         correlation_id: notificationId,
         user_id: request.user_id,
@@ -294,15 +291,15 @@ export class NotificationController {
           click_action: request.click_action,
           data: request.data,
           push_token: userInfo.push_token,
-          sent_by: user.id, // Track who sent it
+          sent_by: user.id, 
         },
       };
 
-      // Publish to push queue
+      
       const published = await this.rabbitMQService.publishMessage('push', message);
 
       if (published) {
-        // Record in tracker
+        
         await this.trackerService.recordNotificationQueued(
           notificationId,
           'push',
@@ -404,7 +401,7 @@ export class NotificationController {
     @CurrentUser() user: any,
   ) {
     try {
-      // Users can only see their own notifications (unless admin)
+      
       if (user.role !== 'admin' && user.id !== userId) {
         throw new HttpException(
           {
@@ -452,7 +449,7 @@ export class NotificationController {
   })
   async getStatistics(@CurrentUser() user: any) {
     try {
-      // Only admins can view statistics
+      
       if (user.role !== 'admin') {
         throw new HttpException(
           {
@@ -491,7 +488,7 @@ export class NotificationController {
     }
   }
 
-  // Validation methods
+  
   private validateEmailRequest(request: EmailRequestDto): void {
     if (!request.to && !request.user_id) {
       throw new HttpException(

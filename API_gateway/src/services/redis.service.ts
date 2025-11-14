@@ -32,7 +32,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async setNotificationStatus(
     correlationId: string,
     status: any,
-    ttlSeconds: number = 604800, // 7 days
+    ttlSeconds: number = 604800, 
   ): Promise<void> {
     try {
       await this.redis.set(

@@ -14,7 +14,7 @@ import { TemplateHistory } from './template/entities/template-history.entity';
       isGlobal: true,
     }),
 
-    // ✅ PostgreSQL Configuration
+    
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DATABASE_HOST,
@@ -23,20 +23,22 @@ import { TemplateHistory } from './template/entities/template-history.entity';
       password: process.env.DATABASE_PASSWORD,
       database: process.env.DATABASE_NAME,
       entities: [Template, TemplateHistory],
-        synchronize: true,
-        ssl: {
-          rejectUnauthorized: false,
-        },
-      }),
+      synchronize: true,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    }),
 
-    // ✅ RabbitMQ Client (for publishing events)
+    
     ClientsModule.register([
       {
         name: 'RABBITMQ_SERVICE',
         transport: Transport.RMQ,
         options: {
           urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
-          queue: 'template_events_queue',
+          exchange: process.env.RABBITMQ_TEMPLATE_EXCHANGE || 'template.events',
+          exchangeType: process.env.RABBITMQ_TEMPLATE_EXCHANGE_TYPE as any || 'topic',
+          queue: '',
           queueOptions: {
             durable: true,
           },
@@ -49,4 +51,4 @@ import { TemplateHistory } from './template/entities/template-history.entity';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

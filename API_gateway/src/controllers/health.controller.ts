@@ -21,7 +21,7 @@ export class HealthController {
   ) { }
 
   @Get()
-  @Public() // Health checks should be public
+  @Public()
   @ApiOperation({ summary: 'Check overall service health' })
   @ApiOkResponse({
     description: 'Service health status with all dependencies',
@@ -30,16 +30,13 @@ export class HealthController {
   async checkHealth() {
     const startTime = Date.now();
 
-    // Check RabbitMQ
     const rabbitmqHealthy = await this.rabbitMQService.healthCheck();
     const rabbitmqResponseTime = Date.now() - startTime;
 
-    // Check Redis
     const redisStart = Date.now();
     const redisHealthy = await this.redisService.isHealthy();
     const redisResponseTime = Date.now() - redisStart;
 
-    // Check User Service
     const userServiceStart = Date.now();
     const userServiceHealthy = await this.userServiceClient.healthCheck();
     const userServiceResponseTime = Date.now() - userServiceStart;
@@ -68,7 +65,7 @@ export class HealthController {
   }
 
   @Get('ready')
-  @Public() // Kubernetes readiness probe should be public
+  @Public()
   @ApiOperation({ summary: 'Readiness probe for Kubernetes' })
   @ApiOkResponse({
     description: 'Service is ready to accept traffic',
@@ -114,7 +111,6 @@ export class HealthController {
     description: 'Circuit breaker statistics',
   })
   async getCircuitBreakers(@CurrentUser() user: any) {
-    // Only admins can view circuit breaker stats
     if (user?.role !== 'admin') {
       return {
         success: false,
@@ -137,7 +133,6 @@ export class HealthController {
     description: 'Queue statistics',
   })
   async getQueueStats(@CurrentUser() user: any) {
-    // Only admins can view queue stats
     if (user?.role !== 'admin') {
       return {
         success: false,

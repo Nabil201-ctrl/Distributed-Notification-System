@@ -5,12 +5,12 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
  * User info is attached by JwtAuthGuard after JWT verification
  * 
  * @example
- * // Get entire user object
+ * 
  * async sendEmail(@CurrentUser() user: any) {
  *   console.log(user.id, user.email, user.role);
  * }
  * 
- * // Get specific property
+ * 
  * async sendEmail(@CurrentUser('id') userId: string) {
  *   console.log(userId);
  * }
